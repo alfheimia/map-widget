@@ -2,12 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="map.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite App</title>
+    <title>Map Widget</title>
+    <link rel="stylesheet" href="node_modules/jsvectormap/dist/jsvectormap.min.css">
+    <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/main.js"></script>
+    <div id="map"></div>
+    <!-- Include jsVectorMapp and World Map script -->
+     <script src="node_modules/jsvectormap/dist/jsvectormap.min.js"></script>
+     <script src="node_modules/jsvectormap/dist/maps/world.js"></script>
+     <script src="main.js" type="module"></script>
+     <button id="clear-btn">Clear</button>
   </body>
 </html>
