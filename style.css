@@ -18,3 +18,16 @@ body {
   aspect-ratio: 16/9;
 }
 
+.button {
+  margin: 0.5rem;
+}
+
+#clear-btn {
+  background-color: black;
+  border: 1px solid black;
+  border-radius: 0.2rem;
+  color: whitesmoke;
+  padding: 0.2rem;
+  font-family: "PT Sans", sans-serif;
+  font-weight: bold;
+}
