@@ -8,7 +8,30 @@
   box-sizing: border-box;
 }
 
+:root {
+  --BTNBGCOLOR: black;
+  --BTNTEXTCOLOR: whitesmoke;
+  --BTHIGHLIGHTCOLOR: rgb(49, 49, 49);
+  --MAPBGCOLOR: transparent;
+  --MAPBASECOLOR: #a2d2ff;
+  --MAPPLAINCOLOR: #b6b6b6bf;
+  --MAPLINECOLOR: whitesmoke;
+  --INPUTTEXTCOLOR: black;
+}
+
+.dark-mode {
+  --BTNBGCOLOR: #8f8f96;
+  --BTNTEXTCOLOR:#151515;
+  --BTHIGHLIGHTCOLOR: #b6b6bf;
+  --MAPBGCOLOR: #151515;
+  --MAPBASECOLOR: #a2d2ff;
+  --MAPPLAINCOLOR: #b6b6b6bf;
+  --MAPLINECOLOR: #whitesmoke;
+  --INPUTTEXTCOLOR: #8f8f96;
+}
+
 body {
+  background-color: var(--MAPBGCOLOR);
   font-family: "PT Sans", sans-serif;
 }
 
@@ -18,16 +41,44 @@ body {
   aspect-ratio: 16/9;
 }
 
-.button {
+#color-input-form {
   margin: 0.5rem;
+  display: flex;
 }
 
-#clear-btn {
-  background-color: black;
-  border: 1px solid black;
+#base-color-input {
+  width: 250px;
+  margin-right: 20px;
+  padding: 0.3rem;
+  border: 1px solid var(--INPUTTEXTCOLOR);
+  border-radius: 0.2rem ;
+}
+
+input[type="text"] {
+  background-color: transparent;
+  color: var(--INPUTTEXTCOLOR);
+}
+
+.button-container {
+  margin: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+}
+
+.button {
+  background-color: var(--BTNBGCOLOR);
+  border: 1px solid var(--BTNBGCOLOR);
   border-radius: 0.2rem;
-  color: whitesmoke;
+  color: var(--BTNTEXTCOLOR);
   padding: 0.2rem;
   font-family: "PT Sans", sans-serif;
   font-weight: bold;
+}
+
+.button:hover {
+  background-color: var(--BTHIGHLIGHTCOLOR);
+}
+
+#submit-input-btn:active, #submit-input-btn:focus {
+  background-color: var(--BTHIGHLIGHTCOLOR);
 }

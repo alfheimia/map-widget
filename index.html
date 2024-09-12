@@ -9,13 +9,19 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
+    <form id="color-input-form">
+      <label for="base-color-input"></label>
+      <input type="text" id="base-color-input" placeholder="Enter Html color code: e.g. #a2d2ff">
+      <button class="button" id="submit-input-btn">Load Map</button>
+     </form>
     <div id="map"></div>
     <!-- Include jsVectorMapp and World Map script -->
      <script src="node_modules/jsvectormap/dist/jsvectormap.min.js"></script>
      <script src="node_modules/jsvectormap/dist/maps/world.js"></script>
      <script src="main.js" type="module"></script>
-     <div class="button">
-      <button id="clear-btn">Clear</button>
+     <div class="button-container">
+      <button class="button" id="clear-btn">Clear</button>
+      <button class="button" id="toggle-dark-mode">Dark Mode</button>
      </div>
   </body>
 </html>
