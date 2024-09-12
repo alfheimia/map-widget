@@ -83,6 +83,11 @@ function initiateMap() {
         fill: baseColor,
       },
     },
+    onLoaded(map) {
+      window.addEventListener("resize", () => {
+        map.updateSize();
+      });
+    },
     draggable: true,
     showTooltip: true,
     onRegionClick: handleRegionClick,
