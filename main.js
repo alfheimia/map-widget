@@ -1,7 +1,3 @@
-import jsVectorMap from "jsvectormap";
-import "jsvectormap/dist/maps/world.js";
-import getInsetForPoint from "jsvectormap/src/js/core/getInsetForPoint.js";
-
 // Get the DOM elements
 const form = document.getElementById("color-input-form");
 const colorInput = document.getElementById("base-color-input");
