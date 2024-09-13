@@ -1,3 +1,6 @@
+import jsVectorMap from "jsvectormap";
+import "jsvectormap/dist/maps/world.js";
+
 // Get the DOM elements
 const form = document.getElementById("color-input-form");
 const colorInput = document.getElementById("base-color-input");
@@ -10,11 +13,13 @@ let isDarkMode = false;
 let map, baseColor, plainColor, mapBgColor;
 
 // Object to keep track of click counts for each region
-const clickCounts = {};
+let clickCounts = JSON.parse(localStorage.getItem("clickCounts")) || {};
+console.log(clickCounts);
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
   map = initiateMap();
+  restoreMap();
 });
 
 // Form submission to update base color
@@ -58,6 +63,7 @@ clearButton.addEventListener("click", () => {
   map.reset();
   colorInput.value = ""; // Clear the color input field
   Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
+  localStorage.removeItem("clickCounts"); // Clear localStorage
 });
 
 // Initialize the map
@@ -88,6 +94,7 @@ function initiateMap() {
         map.updateSize();
       });
     },
+    zoomOnScroll: false,
     draggable: true,
     showTooltip: true,
     onRegionClick: handleRegionClick,
@@ -114,6 +121,10 @@ function handleRegionClick(event, code) {
     map.regions[code].element.select(false);
     map.regions[code].element.shape.style.selected = { fill: plainColor };
   }
+
+  console.log(clickCounts);
+  // Save click counts to localStorage
+  localStorage.setItem("clickCounts", JSON.stringify(clickCounts));
 }
 
 // Function to darken or lighten color
@@ -148,6 +159,22 @@ function resetMap() {
 
   // Reinitialize the map
   map = initiateMap();
+}
+
+function restoreMap() {
+  if (clickCounts) {
+    Object.keys(clickCounts).forEach((code) => {
+      if (clickCounts[code] > -0.99) {
+        console.log(code + clickCounts[code]);
+
+        const color = darkenColor(baseColor, clickCounts[code], isDarkMode);
+        map.regions[code].element.select(true);
+        map.regions[code].element.shape.style.selected = { fill: color };
+        map.regions[code].element.shape.updateStyle();
+        console.log(map.regions[code].element.shape.isSelected);
+      }
+    });
+  }
 }
 
 function getRegionCentralCoordinates(map, code) {
