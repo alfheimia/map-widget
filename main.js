@@ -1,6 +1,3 @@
-import jsVectorMap from "jsvectormap";
-import "jsvectormap/dist/maps/world.js";
-
 // Get the DOM elements
 const form = document.getElementById("color-input-form");
 const colorInput = document.getElementById("base-color-input");
@@ -14,12 +11,18 @@ let map, baseColor, plainColor, mapBgColor;
 
 // Object to keep track of click counts for each region
 let clickCounts = JSON.parse(localStorage.getItem("clickCounts")) || {};
-console.log(clickCounts);
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
+  // Restore dark mode from localStorage
+  const savedDarkMode = localStorage.getItem("isDarkMode");
+  if (savedDarkMode === "true") {
+    root.classList.add("dark-mode");
+    isDarkMode = true;
+  }
+
+  // Initialize the map after restoring dark mode status
   map = initiateMap();
-  restoreMap();
 });
 
 // Form submission to update base color
@@ -33,6 +36,11 @@ form.addEventListener("submit", (event) => {
     // Update the CSS variable with the new base color
     root.style.setProperty("--MAPBASECOLOR", colorCode);
     baseColor = colorCode;
+
+    map.params.regionStyle.selected.fill = baseColor;
+
+    // Save baseColor to localStorage
+    localStorage.setItem("baseColor", baseColor);
   } else if (colorCode === "") {
     console.log("Using default color");
   } else {
@@ -41,13 +49,16 @@ form.addEventListener("submit", (event) => {
   }
 
   // Re-initialize the map with the new base color
-  resetMap();
+  restoreMap(baseColor);
 });
 
 // Dark mode toggle button
 toggleButton.addEventListener("click", () => {
   root.classList.toggle("dark-mode");
   isDarkMode = root.classList.contains("dark-mode");
+
+  // Save dark mode status to localStorage
+  localStorage.setItem("isDarkMode", isDarkMode);
 
   // Update plainColor and background color on dark mode toggle
   plainColor = getComputedStyle(root)
@@ -60,14 +71,24 @@ toggleButton.addEventListener("click", () => {
 
 // Reset the map and clear inputs
 clearButton.addEventListener("click", () => {
-  map.reset();
+  //map.reset();
+  resetMap();
   colorInput.value = ""; // Clear the color input field
+
   Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
   localStorage.removeItem("clickCounts"); // Clear localStorage
 });
 
 // Initialize the map
 function initiateMap() {
+  // Retrace saved base color
+  let savedBaseColor = localStorage.getItem("baseColor") || "";
+
+  // Change root color if the basecolor exists
+  if (savedBaseColor) {
+    root.style.setProperty("--MAPBASECOLOR", savedBaseColor);
+  }
+
   // Get the CSS variables for map colors
   baseColor = getComputedStyle(root).getPropertyValue("--MAPBASECOLOR").trim();
   plainColor = getComputedStyle(root)
@@ -77,7 +98,7 @@ function initiateMap() {
   isDarkMode = root.classList.contains("dark-mode");
 
   // Create and configure the map
-  return new jsVectorMap({
+  map = new jsVectorMap({
     map: "world",
     selector: "#map",
     regionsSelectable: true,
@@ -99,6 +120,10 @@ function initiateMap() {
     showTooltip: true,
     onRegionClick: handleRegionClick,
   });
+
+  restoreMap(baseColor);
+
+  return map;
 }
 
 // Handle region click events
@@ -122,7 +147,6 @@ function handleRegionClick(event, code) {
     map.regions[code].element.shape.style.selected = { fill: plainColor };
   }
 
-  console.log(clickCounts);
   // Save click counts to localStorage
   localStorage.setItem("clickCounts", JSON.stringify(clickCounts));
 }
@@ -161,17 +185,15 @@ function resetMap() {
   map = initiateMap();
 }
 
-function restoreMap() {
+// Function to restore color according to saved clickcount
+function restoreMap(baseColor) {
   if (clickCounts) {
     Object.keys(clickCounts).forEach((code) => {
       if (clickCounts[code] > -0.99) {
-        console.log(code + clickCounts[code]);
-
         const color = darkenColor(baseColor, clickCounts[code], isDarkMode);
         map.regions[code].element.select(true);
         map.regions[code].element.shape.style.selected = { fill: color };
         map.regions[code].element.shape.updateStyle();
-        console.log(map.regions[code].element.shape.isSelected);
       }
     });
   }
