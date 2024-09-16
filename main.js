@@ -297,9 +297,10 @@ function getRegionCentralCoordinates(map, code) {
 // Use cookies for widget environment
 function setCookie(name, value, days) {
   const d = new Date();
-  d.setDate(d.getTime() + days * 24 * 60 * 60 * 1000);
+  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
   const expires = "expires=" + d.toUTCString();
   document.cookie = name + "=" + value + ";" + expires + ";path=/";
+  console.log(name + "=" + value + ";" + expires + ";path=/");
 }
 
 // Function to get cookie by name
