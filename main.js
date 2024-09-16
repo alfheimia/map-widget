@@ -9,13 +9,22 @@ const clearButton = document.getElementById("clear-btn");
 let isDarkMode = false;
 let map, baseColor, plainColor, mapBgColor;
 
+const cookieLength = 3650;
+
 // Object to keep track of click counts for each region
-let clickCounts = JSON.parse(localStorage.getItem("clickCounts")) || {};
+// let clickCounts = JSON.parse(localStorage.getItem("clickCounts")) || {};
+let clickCounts = {};
+
+const savedClickCounts = getCookie("clickCounts");
+if (savedClickCounts) {
+  clickCounts = JSON.parse(savedClickCounts);
+}
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
   // Restore dark mode from localStorage
-  const savedDarkMode = localStorage.getItem("isDarkMode");
+  const savedDarkMode = getCookie("isDarkMode");
+  // const savedDarkMode = localStorage.getItem("isDarkMode");
   if (savedDarkMode === "true") {
     root.classList.add("dark-mode");
     isDarkMode = true;
@@ -40,7 +49,8 @@ form.addEventListener("submit", (event) => {
     map.params.regionStyle.selected.fill = baseColor;
 
     // Save baseColor to localStorage
-    localStorage.setItem("baseColor", baseColor);
+    // localStorage.setItem("baseColor", baseColor);
+    setCookie("baseColor", baseColor, cookieLength);
   } else if (colorCode === "") {
     console.log("Using default color");
   } else {
@@ -58,7 +68,8 @@ toggleButton.addEventListener("click", () => {
   isDarkMode = root.classList.contains("dark-mode");
 
   // Save dark mode status to localStorage
-  localStorage.setItem("isDarkMode", isDarkMode);
+  // localStorage.setItem("isDarkMode", isDarkMode);
+  setCookie("isDarkMode", isDarkMode, cookieLength);
 
   // Update plainColor and background color on dark mode toggle
   plainColor = getComputedStyle(root)
@@ -76,13 +87,15 @@ clearButton.addEventListener("click", () => {
   colorInput.value = ""; // Clear the color input field
 
   Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
-  localStorage.removeItem("clickCounts"); // Clear localStorage
+  // localStorage.removeItem("clickCounts"); // Clear localStorage
+  deleteCookie("clickCounts");
 });
 
 // Initialize the map
 function initiateMap() {
   // Retrace saved base color
-  let savedBaseColor = localStorage.getItem("baseColor") || "";
+  let savedBaseColor = getCookie("baseColor") || "";
+  // let savedBaseColor = localStorage.getItem("baseColor") || "";
 
   // Change root color if the basecolor exists
   if (savedBaseColor) {
@@ -148,7 +161,8 @@ function handleRegionClick(event, code) {
   }
 
   // Save click counts to localStorage
-  localStorage.setItem("clickCounts", JSON.stringify(clickCounts));
+  setCookie("clickCounts", JSON.stringify(clickCounts), cookieLength);
+  // localStorage.setItem("clickCounts", JSON.stringify(clickCounts));
 }
 
 // Function to darken or lighten color
@@ -278,4 +292,29 @@ function getRegionCentralCoordinates(map, code) {
       lng = (lambda0 + theta / n) * degRad;
       return { lat, lng };
   }
+}
+
+// Use cookies for widget environment
+function setCookie(name, value, days) {
+  const d = new Date();
+  d.setDate(d.getTime() + days * 24 * 60 * 60 * 1000);
+  const expires = "expires=" + d.toUTCString();
+  document.cookie = name + "=" + value + ";" + expires + ";path=/";
+}
+
+// Function to get cookie by name
+function getCookie(name) {
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i].trim();
+    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+}
+
+// Delete a cookie by resetting the expiry date to the past
+function deleteCookie(name) {
+  // Set the cookie with the same name, path, and set the expiration date in the past
+  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
 }
