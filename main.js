@@ -32,6 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize the map after restoring dark mode status
   map = initiateMap();
+  restoreMap(baseColor);
 });
 
 // Form submission to update base color
