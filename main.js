@@ -1,7 +1,7 @@
 /* import jsVectorMap from "jsvectormap/dist/jsvectormap.js"; */
-import "./maps/china.js";
-import "./maps/world.js";
-import "./maps/us_mill_en.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/china.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/world.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/us_mill_en.js";
 
 let mapType = "world";
 
@@ -18,25 +18,28 @@ let isDarkMode = false;
 let map, baseColor, plainColor, mapBgColor;
 let clickCounts = {};
 
-const cookieLength = 3650; // Cookie expiry set to 10 years
+// const cookieLength = 3650; // Cookie expiry set to 10 years
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
   // Restore dark mode from cookies
-  const savedDarkMode = getCookie("isDarkMode");
-  if (savedDarkMode === "true") {
+  // const savedDarkMode = getCookie("isDarkMode");
+  const savedDarkMode = getLocalStorageItem("isDarkMode");
+  if (savedDarkMode === true) {
     root.classList.add("dark-mode");
     isDarkMode = true;
   }
 
   // Restore click counts from cookies
-  const savedClickCounts = getCookie("clickCounts");
-  if (savedClickCounts) {
+  clickCounts = getLocalStorageItem("clickCounts") || {};
+  // const savedClickCounts = getCookie("clickCounts");
+  /* if (savedClickCounts) {
     clickCounts = JSON.parse(savedClickCounts);
-  }
+  } */
 
   // Restore the map selector value from cookies
-  const savedMapType = getCookie("mapType");
+  const savedMapType = getLocalStorageItem("mapType");
+  // const savedMapType = getCookie("mapType");
   if (savedMapType) {
     mapSelector.value = savedMapType;
     mapType = savedMapType;
@@ -54,7 +57,8 @@ mapSelector.addEventListener("change", (event) => {
   // Only update the map if the selection has changed
   if (mapType !== selectedMapType) {
     mapType = selectedMapType;
-    setCookie("mapType", mapType, cookieLength);
+    // setCookie("mapType", mapType, cookieLength);
+    setLocalStorageItem("mapType", mapType);
 
     // Reinitialize the map
     resetMap();
@@ -78,7 +82,8 @@ form.addEventListener("submit", (event) => {
     map.params.regionStyle.selected.fill = baseColor;
 
     // Save baseColor to cookies
-    setCookie("baseColor", baseColor, cookieLength);
+    // setCookie("baseColor", baseColor, cookieLength);
+    setLocalStorageItem("baseColor", baseColor);
 
     // Reinitialize the map with the new color
     restoreMap(baseColor);
@@ -95,7 +100,8 @@ toggleButton.addEventListener("click", () => {
   isDarkMode = root.classList.contains("dark-mode");
 
   // Save dark mode status to cookies
-  setCookie("isDarkMode", isDarkMode, cookieLength);
+  // setCookie("isDarkMode", isDarkMode, cookieLength);
+  setLocalStorageItem("isDarkMode", isDarkMode);
 
   // Update map background color based on dark mode
   plainColor = getComputedStyle(root)
@@ -113,17 +119,20 @@ clearButton.addEventListener("click", () => {
   colorInput.value = ""; // Clear the color input field
 
   // Clear click counts from cookies
-  deleteCookie("clickCounts");
+  deleteLocalStorageItem("clickCounts");
+  // deleteCookie("clickCounts");
 });
 
 // Initialize the map
 function initiateMap() {
   // Retrace saved base color
-  let savedBaseColor = getCookie("baseColor") || "";
+  // let savedBaseColor = getCookie("baseColor") || "";
+  let savedBaseColor = getLocalStorageItem("baseColor") || "";
   // let savedBaseColor = localStorage.getItem("baseColor") || "";
 
   // Retrace mapType
-  mapType = getCookie("mapType") || "world";
+  mapType = getLocalStorageItem("mapType") || "world";
+  // mapType = getCookie("mapType") || "world";
 
   // Change root color if the basecolor exists
   if (savedBaseColor) {
@@ -189,8 +198,8 @@ function handleRegionClick(event, code) {
   }
 
   // Save click counts to localStorage
-  setCookie("clickCounts", JSON.stringify(clickCounts), cookieLength);
-  // localStorage.setItem("clickCounts", JSON.stringify(clickCounts));
+  // setCookie("clickCounts", JSON.stringify(clickCounts), cookieLength);
+  setLocalStorageItem("clickCounts", clickCounts);
 }
 
 // Function to darken or lighten color
@@ -226,7 +235,8 @@ function resetMap() {
     // Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
 
     // localStorage.removeItem("clickCounts"); // Clear localStorage
-    deleteCookie("clickCounts");
+    deleteLocalStorageItem("clickCounts");
+    // deleteCookie("clickCounts");
 
     map.destroy();
     mapContainer.innerHTML = ""; // Clear the map container
@@ -353,4 +363,44 @@ function getCookie(name) {
 
 function deleteCookie(name) {
   setCookie(name, "", -1); // Set cookie with a past expiration date to delete it
+}
+
+// Local Storage utility functions
+function setLocalStorageItem(name, value) {
+  // Convert the value to a string and save it in local storage
+  const valueToStore =
+    typeof value === "object" ? JSON.stringify(value) : value;
+  localStorage.setItem(name, valueToStore);
+}
+
+function getLocalStorageItem(name) {
+  const storedValue = localStorage.getItem(name);
+
+  if (storedValue === null) {
+    return null; // Return null if the item does not exist
+  }
+
+  // Try to parse the value as JSON
+  try {
+    return JSON.parse(storedValue);
+  } catch (e) {
+    // If parsing fails, return the value as a string
+    return storedValue;
+  }
+}
+
+function deleteLocalStorageItem(name) {
+  // Remove the item from local storage
+  localStorage.removeItem(name);
+}
+
+function clearAll() {
+  deleteLocalStorageItem("clickCounts");
+  deleteLocalStorageItem("baseColor");
+  deleteLocalStorageItem("mapType");
+  deleteLocalStorageItem("idDarkMode");
+  deleteCookie("clickCounts");
+  deleteCookie("baseColor");
+  deleteCookie("mapType");
+  deleteCookie("isDarkMode");
 }
