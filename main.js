@@ -1,3 +1,10 @@
+/* import jsVectorMap from "jsvectormap/dist/jsvectormap.js"; */
+import "./maps/china.js";
+import "./maps/world.js";
+import "./maps/us_mill_en.js";
+
+let mapType = "world";
+
 // Get the DOM elements
 const form = document.getElementById("color-input-form");
 const colorInput = document.getElementById("base-color-input");
@@ -5,37 +12,57 @@ const root = document.documentElement;
 const toggleButton = document.getElementById("toggle-dark-mode");
 const mapContainer = document.getElementById("map");
 const clearButton = document.getElementById("clear-btn");
+const mapSelector = document.getElementById("map-selector");
 
 let isDarkMode = false;
 let map, baseColor, plainColor, mapBgColor;
-
-const cookieLength = 3650;
-
-// Object to keep track of click counts for each region
-// let clickCounts = JSON.parse(localStorage.getItem("clickCounts")) || {};
 let clickCounts = {};
 
-const savedClickCounts = getCookie("clickCounts");
-if (savedClickCounts) {
-  clickCounts = JSON.parse(savedClickCounts);
-}
+const cookieLength = 3650; // Cookie expiry set to 10 years
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
-  // Restore dark mode from localStorage
+  // Restore dark mode from cookies
   const savedDarkMode = getCookie("isDarkMode");
-  // const savedDarkMode = localStorage.getItem("isDarkMode");
   if (savedDarkMode === "true") {
     root.classList.add("dark-mode");
     isDarkMode = true;
   }
 
-  // Initialize the map after restoring dark mode status
+  // Restore click counts from cookies
+  const savedClickCounts = getCookie("clickCounts");
+  if (savedClickCounts) {
+    clickCounts = JSON.parse(savedClickCounts);
+  }
+
+  // Restore the map selector value from cookies
+  const savedMapType = getCookie("mapType");
+  if (savedMapType) {
+    mapSelector.value = savedMapType;
+    mapType = savedMapType;
+  }
+
+  // Initialize the map
   map = initiateMap();
   restoreMap(baseColor);
 });
 
-// Form submission to update base color
+// Handle map type change from the select dropdown
+mapSelector.addEventListener("change", (event) => {
+  const selectedMapType = event.target.value;
+
+  // Only update the map if the selection has changed
+  if (mapType !== selectedMapType) {
+    mapType = selectedMapType;
+    setCookie("mapType", mapType, cookieLength);
+
+    // Reinitialize the map
+    resetMap();
+    restoreMap(baseColor);
+  }
+});
+
+// Form submission to update the base color
 form.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -43,24 +70,23 @@ form.addEventListener("submit", (event) => {
   const isValidHex = /^#[0-9A-F]{6}$/i.test(colorCode);
 
   if (isValidHex) {
-    // Update the CSS variable with the new base color
+    // Update the CSS variable for the base map color
     root.style.setProperty("--MAPBASECOLOR", colorCode);
     baseColor = colorCode;
 
+    // Update the map region styles
     map.params.regionStyle.selected.fill = baseColor;
 
-    // Save baseColor to localStorage
-    // localStorage.setItem("baseColor", baseColor);
+    // Save baseColor to cookies
     setCookie("baseColor", baseColor, cookieLength);
+
+    // Reinitialize the map with the new color
+    restoreMap(baseColor);
   } else if (colorCode === "") {
     console.log("Using default color");
   } else {
     alert("Please enter a valid hex color code.");
-    return;
   }
-
-  // Re-initialize the map with the new base color
-  restoreMap(baseColor);
 });
 
 // Dark mode toggle button
@@ -68,11 +94,10 @@ toggleButton.addEventListener("click", () => {
   root.classList.toggle("dark-mode");
   isDarkMode = root.classList.contains("dark-mode");
 
-  // Save dark mode status to localStorage
-  // localStorage.setItem("isDarkMode", isDarkMode);
+  // Save dark mode status to cookies
   setCookie("isDarkMode", isDarkMode, cookieLength);
 
-  // Update plainColor and background color on dark mode toggle
+  // Update map background color based on dark mode
   plainColor = getComputedStyle(root)
     .getPropertyValue("--MAPPLAINCOLOR")
     .trim();
@@ -83,12 +108,11 @@ toggleButton.addEventListener("click", () => {
 
 // Reset the map and clear inputs
 clearButton.addEventListener("click", () => {
-  //map.reset();
+  clickCounts = {};
   resetMap();
   colorInput.value = ""; // Clear the color input field
 
-  Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
-  // localStorage.removeItem("clickCounts"); // Clear localStorage
+  // Clear click counts from cookies
   deleteCookie("clickCounts");
 });
 
@@ -97,6 +121,9 @@ function initiateMap() {
   // Retrace saved base color
   let savedBaseColor = getCookie("baseColor") || "";
   // let savedBaseColor = localStorage.getItem("baseColor") || "";
+
+  // Retrace mapType
+  mapType = getCookie("mapType") || "world";
 
   // Change root color if the basecolor exists
   if (savedBaseColor) {
@@ -113,7 +140,7 @@ function initiateMap() {
 
   // Create and configure the map
   map = new jsVectorMap({
-    map: "world",
+    map: mapType,
     selector: "#map",
     regionsSelectable: true,
     regionStyle: {
@@ -192,6 +219,15 @@ function darkenColor(baseColor, clicks, isDarkMode) {
 // Function to reset and re-initialize the map
 function resetMap() {
   if (map) {
+    clickCounts = {};
+
+    colorInput.value = ""; // Clear the color input field
+
+    // Object.keys(clickCounts).forEach((code) => (clickCounts[code] = -0.99)); // Reset click counts
+
+    // localStorage.removeItem("clickCounts"); // Clear localStorage
+    deleteCookie("clickCounts");
+
     map.destroy();
     mapContainer.innerHTML = ""; // Clear the map container
   }
@@ -295,28 +331,26 @@ function getRegionCentralCoordinates(map, code) {
   }
 }
 
-// Use cookies for widget environment
+// Cookie utility functions
 function setCookie(name, value, days) {
-  const d = new Date();
-  d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
-  const expires = "expires=" + d.toUTCString();
-  document.cookie = name + "=" + value + ";" + expires + ";path=/";
-  console.log(name + "=" + value + ";" + expires + ";path=/");
+  const expires = new Date(Date.now() + days * 864e5).toUTCString();
+  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(
+    value
+  )};expires=${expires};path=/;SameSite=None;Secure`;
 }
 
-// Function to get cookie by name
 function getCookie(name) {
   const nameEQ = name + "=";
-  const ca = document.cookie.split(";");
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i].trim();
-    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+  const cookiesArray = document.cookie.split(";");
+  for (let cookie of cookiesArray) {
+    cookie = cookie.trim();
+    if (cookie.startsWith(nameEQ)) {
+      return decodeURIComponent(cookie.substring(nameEQ.length));
+    }
   }
   return null;
 }
 
-// Delete a cookie by resetting the expiry date to the past
 function deleteCookie(name) {
-  // Set the cookie with the same name, path, and set the expiration date in the past
-  document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  setCookie(name, "", -1); // Set cookie with a past expiration date to delete it
 }

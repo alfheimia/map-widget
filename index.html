@@ -9,15 +9,25 @@
     <link rel="stylesheet" href="style.css">
   </head>
   <body>
-    <form id="color-input-form">
-      <label for="base-color-input"></label>
-      <input type="text" id="base-color-input" placeholder="Enter Html color code: e.g. #a2d2ff">
-      <button class="button" id="submit-input-btn">Load Map</button>
-     </form>
+    <div class="controls-container">
+      <form id="color-input-form">
+        <label for="base-color-input"></label>
+        <input type="text" id="base-color-input" placeholder="Enter Html color code: e.g. #a2d2ff">
+        <button class="button" id="submit-input-btn">Load Map</button>
+       </form>
+       <select id="map-selector">
+        <option value="world">World</option>
+        <option value="cn_merc">China</option>
+        <option value="us_mill_en">United States</option>
+        <!-- Add more options as needed -->
+      </select>
+    </div>
     <div id="map"></div>
     <!-- Include jsVectorMapp and World Map script -->
      <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/jsvectormap.min.js"></script>
-     <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script>
+     <!-- <script src="https://cdn.jsdelivr.net/npm/jsvectormap@1.6.0/dist/maps/world.js"></script> -->
+<!--       <script src="./node_modules/jsvectormap/dist/jsvectormap.min.js"></script>
+      <script src="./node_modules/jsvectormap/dist/maps/us_mill_en.js"></script> -->
      <script src="main.js" type="module"></script>
      <div class="button-container">
       <button class="button" id="clear-btn">Clear</button>
