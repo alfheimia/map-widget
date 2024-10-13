@@ -30,8 +30,14 @@
       <script src="./node_modules/jsvectormap/dist/maps/us_mill_en.js"></script> -->
      <script src="https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/main.js" type="module"></script>
      <div class="button-container">
-      <button class="button" id="clear-btn">Clear</button>
-      <button class="button" id="toggle-dark-mode">Dark Mode</button>
+      <div class="left-button-container">
+      <button class="button left-btn" id="add-new-map-btn">New</button>
+      <button class="button left-btn" id="clear-btn">Clear</button> 
+      <button class="button left-btn" id="destroy-map-btn">Destroy</button>
+      </div>
+      <div class="right-button-container">
+        <button class="button" id="toggle-dark-mode">Dark Mode</button>
+      </div>
      </div>
   </body>
 </html>
