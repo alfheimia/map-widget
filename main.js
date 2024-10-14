@@ -2,6 +2,9 @@
 import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/china.js";
 import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/world.js";
 import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/us_mill_en.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/spain.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/canada.js";
+import "https://cdn.jsdelivr.net/gh/alfheimia/map-widget@main/maps/russia.js";
 
 let mapType = "world";
 
@@ -21,6 +24,9 @@ let clickCounts = {
   world: {},
   cn_merc: {},
   us_mill_en: {},
+  spain: {},
+  canada: {},
+  russia: {},
 };
 
 const cookieLength = 3650; // Cookie expiry set to 10 years
@@ -39,6 +45,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const savedWorldClickCounts = getCookie("worldClickCounts");
   const savedUSClickCounts = getCookie("us_mill_enClickCounts");
   const savedChinaClickCounts = getCookie("cn_mercClickCounts");
+  const savedSpainClickCounts = getCookie("spainClickCounts");
+  const savedCanadaClickCounts = getCookie("canadaClickCounts");
+  const savedRussiaClickCounts = getCookie("russiaClickCounts");
+
   if (savedWorldClickCounts) {
     clickCounts.world = savedWorldClickCounts;
   }
@@ -47,6 +57,15 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   if (savedChinaClickCounts) {
     clickCounts.cn_merc = savedChinaClickCounts;
+  }
+  if (savedSpainClickCounts) {
+    clickCounts.spain = savedSpainClickCounts;
+  }
+  if (savedCanadaClickCounts) {
+    clickCounts.canada = savedCanadaClickCounts;
+  }
+  if (savedRussiaClickCounts) {
+    clickCounts.russia = savedRussiaClickCounts;
   }
 
   // Initialize the map
@@ -153,12 +172,18 @@ resetButton.addEventListener("click", () => {
     world: {},
     cn_merc: {},
     us_mill_en: {},
+    spain: {},
+    canada: {},
+    russia: {}, // Add this line
   };
 
   // Clear all related cookies
   deleteCookie("worldClickCounts");
   deleteCookie("cn_mercClickCounts");
   deleteCookie("us_mill_enClickCounts");
+  deleteCookie("spainClickCounts");
+  deleteCookie("canadaClickCounts");
+  deleteCookie("russiaClickCounts");
   deleteCookie("baseColor");
   deleteCookie("mapType");
   deleteCookie("isDarkMode");
