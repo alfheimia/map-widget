@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initialize the map
   map = initiateMap();
   restoreMap(baseColor);
+  updateURLWithState();
 });
 
 // Listen for popstate events (when user navigates back/forward)
@@ -63,6 +64,9 @@ window.addEventListener("popstate", () => {
   }
   map = initiateMap();
   restoreMap(baseColor);
+
+  // Update URL with new state
+  updateURLWithState();
 });
 
 // Handle map type change from the select dropdown
@@ -71,13 +75,16 @@ mapSelector.addEventListener("change", (event) => {
   if (mapType !== selectedMapType) {
     mapType = selectedMapType;
     setCookie("mapType", mapType, cookieLength);
-    updateURL(selectedMapType);
+
     if (map) {
       map.destroy();
       mapContainer.innerHTML = "";
     }
     map = initiateMap();
     restoreMap(baseColor);
+
+    // Update URL with new state
+    updateURLWithState();
   }
 });
 
@@ -102,6 +109,9 @@ form.addEventListener("submit", (event) => {
 
     // Reinitialize the map with the new color
     restoreMap(baseColor);
+
+    // Update URL with new state
+    updateURLWithState();
   } else if (colorCode === "") {
     console.log("Using default color");
   } else {
@@ -124,11 +134,17 @@ toggleButton.addEventListener("click", () => {
   mapBgColor = getComputedStyle(root).getPropertyValue("--MAPBGCOLOR").trim();
 
   map.setBackgroundColor(mapBgColor);
+
+  // Update URL with new state
+  updateURLWithState();
 });
 
 // Reset the map and clear inputs
 clearButton.addEventListener("click", () => {
   resetMap();
+
+  // Update URL with new state
+  updateURLWithState();
 });
 
 resetButton.addEventListener("click", () => {
@@ -170,6 +186,9 @@ resetButton.addEventListener("click", () => {
   map = initiateMap();
 
   console.log("All settings and click counts reset to default");
+
+  // Update URL with new state
+  updateURLWithState();
 });
 
 // Initialize the map
@@ -216,6 +235,9 @@ function initiateMap() {
 
   restoreMap(baseColor);
 
+  // Update URL with new state
+  updateURLWithState();
+
   return map;
 }
 
@@ -250,6 +272,8 @@ function handleRegionClick(event, code) {
     JSON.stringify(clickCounts[mapType]),
     cookieLength
   );
+
+  updateURLWithState();
 }
 
 // Function to darken or lighten color
@@ -314,112 +338,53 @@ function restoreMap(baseColor) {
       }
     });
   }
-}
 
-// Function to update URL without reloading the page
-function updateURL(mapType) {
-  const url = new URL(window.location);
-  url.searchParams.set("map", mapType);
-  window.history.pushState({}, "", url);
+  // Update URL with new state
+  updateURLWithState();
 }
 
 // Function to update mapType based on URL parameter
 function updateMapTypeFromURL() {
   const urlParams = new URLSearchParams(window.location.search);
-  const urlMapType = urlParams.get("map");
+  const encodedState = urlParams.get("state");
 
+  if (encodedState) {
+    const state = decodeMapState(encodedState);
+    if (state) {
+      mapType = state.mapType;
+      isDarkMode = state.isDarkMode;
+      baseColor = state.baseColor;
+      clickCounts[mapType] = state.clickCounts;
+
+      // Apply dark mode
+      if (isDarkMode) {
+        root.classList.add("dark-mode");
+      } else {
+        root.classList.remove("dark-mode");
+      }
+
+      // Apply base color
+      root.style.setProperty("--MAPBASECOLOR", baseColor);
+
+      // Update map selector
+      mapSelector.value = mapType;
+
+      return mapType;
+    }
+  }
+
+  // Fall back to original behavior if no valid state is found
+  const urlMapType = urlParams.get("map");
   if (
     urlMapType &&
     mapSelector.querySelector(`option[value="${urlMapType}"]`)
   ) {
     mapType = urlMapType;
   } else {
-    mapType = "world"; // Default to world if URL param is invalid or not present
+    mapType = "world";
   }
-
   mapSelector.value = mapType;
   return mapType;
-}
-
-function getRegionCentralCoordinates(map, code) {
-  const bbox = map.regions[code].element.shape.getBBox();
-
-  let x = bbox.x + bbox.width / 2;
-  let y = bbox.y + bbox.height / 2;
-
-  x = x * map.scale;
-  y = y * map.scale;
-
-  const inset = map._mapData.insets;
-  const bboxInset = inset[0].bbox;
-  const projectionType = map._mapData.projection.type;
-  const c = map._mapData.projection.centralMeridian;
-
-  const degRad = 180 / Math.PI;
-  const radDeg = Math.PI / 180;
-  const radius = 6381372;
-
-  // Inverse the scale and translation
-  /*  x = (x - inset[0].left * map.scale) / map.scale;
-  y = (y - inset[0].top * map.scale) / map.scale;
- */
-  // Inverse normalizes
-  x =
-    (x / (inset[0].width * map.scale)) * (bboxInset[1].x - bboxInset[0].x) +
-    bboxInset[0].x;
-  y =
-    (y / (inset[0].height * map.scale)) * (bboxInset[1].y - bboxInset[0].y) +
-    bboxInset[0].y;
-
-  switch (projectionType) {
-    case "mill":
-      let lat =
-        -(2.5 * Math.atan(Math.exp((0.8 * y) / radius)) - (5 * Math.PI) / 8) *
-        degRad;
-      let lng = (c * radDeg + x / radius) * degRad;
-      return { lat, lng };
-    case "merc":
-      lat =
-        (2.5 * Math.atan(Math.exp((0.8 * y) / radius)) - (5 * Math.PI) / 8) *
-        degRad;
-      lng = (c * radDeg + x / radius) * degRad;
-      return { lat, lng };
-    case "aea":
-      x = x / radius;
-      y = y / radius;
-      fi0 = 0;
-      lambda0 = c * radDeg;
-      fi1 = 29.5 * radDeg;
-      fi2 = 45.5 * radDeg;
-      n = (Math.sin(fi1) + Math.sin(fi2)) / 2;
-      let C = Math.cos(fi1) * Math.cos(fi1) + 2 * n * Math.sin(fi1);
-      ro0 = Math.sqrt(C - 2 * n * Math.sin(fi0)) / n;
-      ro = Math.sqrt(x * x + (ro0 - y) * (ro0 - y));
-      theta = Math.atan(x / (ro0 - y));
-      lat = Math.asin((C - ro * ro * n * n) / (2 * n)) * degRad;
-      lng = (lambda0 + theta / n) * degRad;
-      return { lat, lng };
-    case "lcc":
-      x = x / radius;
-      y = y / radius;
-      fi0 = 0;
-      lambda0 = c * radDeg;
-      fi1 = 33 * radDeg;
-      fi2 = 45 * radDeg;
-      n =
-        Math.log(Math.cos(fi1) * (1 / Math.cos(fi2))) /
-        Math.log(
-          Math.tan(Math.PI / 4 + fi2 / 2) *
-            (1 / Math.tan(Math.PI / 4 + fi1 / 2))
-        );
-      F = (Math.cos(fi1) * Math.pow(Math.tan(Math.PI / 4 + fi1 / 2), n)) / n;
-      ro0 = F * Math.pow(1 / Math.tan(Math.PI / 4 + fi0 / 2), n);
-      ro = Math.sgn(n) * Math.sqrt(x * x + (ro0 - y) * (ro0 - y));
-      theta = Math.atan(x / (ro0 - y));
-      lat = (2 * Math.atan(Math.pow(F / ro, 1 / n)) - Math.PI / 2) * degRad;
-      lng = (lambda0 + theta / n) * degRad;
-      return { lat, lng };
-  }
 }
 
 // Cookie utility functions
@@ -456,4 +421,30 @@ function clearAll() {
   deleteCookie("baseColor");
   deleteCookie("mapType");
   deleteCookie("isDarkMode");
+}
+
+function encodeMapState() {
+  const state = {
+    mapType,
+    isDarkMode,
+    baseColor,
+    clickCounts: clickCounts[mapType],
+  };
+  return btoa(JSON.stringify(state)); // Base64 encode the state
+}
+
+function decodeMapState(encodedState) {
+  try {
+    return JSON.parse(atob(encodedState));
+  } catch (error) {
+    console.error("Failed to decode map state:", error);
+    return null;
+  }
+}
+
+function updateURLWithState() {
+  const encodedState = encodeMapState();
+  const url = new URL(window.location);
+  url.searchParams.set("state", encodedState);
+  window.history.replaceState({}, "", url);
 }
