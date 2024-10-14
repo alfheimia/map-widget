@@ -12,50 +12,41 @@ const root = document.documentElement;
 const toggleButton = document.getElementById("toggle-dark-mode");
 const mapContainer = document.getElementById("map");
 const clearButton = document.getElementById("clear-btn");
+const resetButton = document.getElementById("destroy-map-btn");
 const mapSelector = document.getElementById("map-selector");
 
 let isDarkMode = false;
 let map, baseColor, plainColor, mapBgColor;
 let clickCounts = {
   world: {},
-  china: {},
-  us: {},
+  cn_merc: {},
+  us_mill_en: {},
 };
 
 const cookieLength = 3650; // Cookie expiry set to 10 years
 
 // Initialize the map on page load
 document.addEventListener("DOMContentLoaded", () => {
+  updateMapTypeFromURL();
   // Restore dark mode from cookies
   const savedDarkMode = getCookie("isDarkMode");
-  // const savedDarkMode = getLocalStorageItem("isDarkMode");
-  if (savedDarkMode === true) {
+  if (savedDarkMode === "true" || savedDarkMode === true) {
     root.classList.add("dark-mode");
     isDarkMode = true;
   }
 
-  // Restore click counts from cookies
-  // clickCounts = getLocalStorageItem("clickCounts") || {};
   // Restore click counts for all maps from cookies
   const savedWorldClickCounts = getCookie("worldClickCounts");
-  const savedUSClickCounts = getCookie("usClickCounts");
-  const savedChinaClickCounts = getCookie("chinaClickCounts");
+  const savedUSClickCounts = getCookie("us_mill_enClickCounts");
+  const savedChinaClickCounts = getCookie("cn_mercClickCounts");
   if (savedWorldClickCounts) {
-    clickCounts.world = JSON.parse(savedWorldClickCounts);
+    clickCounts.world = savedWorldClickCounts;
   }
   if (savedUSClickCounts) {
-    clickCounts.us = JSON.parse(savedUSClickCounts);
+    clickCounts.us_mill_en = savedUSClickCounts;
   }
   if (savedChinaClickCounts) {
-    clickCounts.china = JSON.parse(savedChinaClickCounts);
-  }
-
-  // Restore the map selector value from cookies
-  // const savedMapType = getLocalStorageItem("mapType");
-  const savedMapType = getCookie("mapType");
-  if (savedMapType) {
-    mapSelector.value = savedMapType;
-    mapType = savedMapType;
+    clickCounts.cn_merc = savedChinaClickCounts;
   }
 
   // Initialize the map
@@ -63,25 +54,29 @@ document.addEventListener("DOMContentLoaded", () => {
   restoreMap(baseColor);
 });
 
+// Listen for popstate events (when user navigates back/forward)
+window.addEventListener("popstate", () => {
+  updateMapTypeFromURL();
+  if (map) {
+    map.destroy();
+    mapContainer.innerHTML = "";
+  }
+  map = initiateMap();
+  restoreMap(baseColor);
+});
+
 // Handle map type change from the select dropdown
 mapSelector.addEventListener("change", (event) => {
   const selectedMapType = event.target.value;
-
-  // Only update the map if the selection has changed
   if (mapType !== selectedMapType) {
     mapType = selectedMapType;
     setCookie("mapType", mapType, cookieLength);
-
-    // Clear the existing map
+    updateURL(selectedMapType);
     if (map) {
       map.destroy();
-      mapContainer.innerHTML = ""; // Clear the map container
+      mapContainer.innerHTML = "";
     }
-
-    // Reinitialize the map
     map = initiateMap();
-
-    // Restore the map with the saved color and click counts for the new map type
     restoreMap(baseColor);
   }
 });
@@ -89,6 +84,7 @@ mapSelector.addEventListener("change", (event) => {
 // Form submission to update the base color
 form.addEventListener("submit", (event) => {
   event.preventDefault();
+  console.log("Form submitted");
 
   const colorCode = colorInput.value.trim();
   const isValidHex = /^#[0-9A-F]{6}$/i.test(colorCode);
@@ -103,7 +99,6 @@ form.addEventListener("submit", (event) => {
 
     // Save baseColor to cookies
     setCookie("baseColor", baseColor, cookieLength);
-    // setLocalStorageItem("baseColor", baseColor);
 
     // Reinitialize the map with the new color
     restoreMap(baseColor);
@@ -121,7 +116,6 @@ toggleButton.addEventListener("click", () => {
 
   // Save dark mode status to cookies
   setCookie("isDarkMode", isDarkMode, cookieLength);
-  // setLocalStorageItem("isDarkMode", isDarkMode);
 
   // Update map background color based on dark mode
   plainColor = getComputedStyle(root)
@@ -134,25 +128,54 @@ toggleButton.addEventListener("click", () => {
 
 // Reset the map and clear inputs
 clearButton.addEventListener("click", () => {
-  clickCounts = {};
   resetMap();
-  colorInput.value = ""; // Clear the color input field
+});
 
-  // Clear click counts from cookies
-  // deleteLocalStorageItem("clickCounts");
-  deleteCookie("clickCounts");
+resetButton.addEventListener("click", () => {
+  // Reset click counts for all map types
+  clickCounts = {
+    world: {},
+    cn_merc: {},
+    us_mill_en: {},
+  };
+
+  // Clear all related cookies
+  deleteCookie("worldClickCounts");
+  deleteCookie("cn_mercClickCounts");
+  deleteCookie("us_mill_enClickCounts");
+  deleteCookie("baseColor");
+  deleteCookie("mapType");
+  deleteCookie("isDarkMode");
+
+  // Reset color input
+  colorInput.value = "";
+
+  // Reset base color to default
+  baseColor = getComputedStyle(root).getPropertyValue("--MAPBASECOLOR").trim();
+  root.style.setProperty("--MAPBASECOLOR", baseColor);
+
+  // Reset dark mode
+  isDarkMode = false;
+  root.classList.remove("dark-mode");
+
+  // Reset map type to default (world)
+  mapType = "world";
+  mapSelector.value = "world";
+
+  // Reset and reinitialize the map
+  if (map) {
+    map.destroy();
+    mapContainer.innerHTML = "";
+  }
+  map = initiateMap();
+
+  console.log("All settings and click counts reset to default");
 });
 
 // Initialize the map
 function initiateMap() {
   // Retrace saved base color
   let savedBaseColor = getCookie("baseColor") || "";
-  //let savedBaseColor = getLocalStorageItem("baseColor") || "";
-  // let savedBaseColor = localStorage.getItem("baseColor") || "";
-
-  // Retrace mapType
-  // mapType = getLocalStorageItem("mapType") || "world";
-  mapType = getCookie("mapType") || "world";
 
   // Change root color if the basecolor exists
   if (savedBaseColor) {
@@ -200,7 +223,7 @@ function initiateMap() {
 function handleRegionClick(event, code) {
   const maxClicks = 5;
 
-  if (!clickCounts[mapType][code]) {
+  if (clickCounts[mapType][code] === undefined) {
     clickCounts[mapType][code] = -0.99;
   }
 
@@ -272,17 +295,50 @@ function resetMap() {
 
 // Function to restore color according to saved clickcount
 function restoreMap(baseColor) {
-  if (clickCounts) {
-    Object.keys(clickCounts).forEach((code) => {
-      if (clickCounts[code] > -0.99) {
-        const color = darkenColor(baseColor, clickCounts[code], isDarkMode);
-        map.regions[code].element.select(true);
-        ƒ;
-        map.regions[code].element.shape.style.selected = { fill: color };
-        map.regions[code].element.shape.updateStyle();
+  if (clickCounts && clickCounts[mapType]) {
+    Object.keys(clickCounts[mapType]).forEach((code) => {
+      if (
+        clickCounts[mapType][code] !== undefined &&
+        clickCounts[mapType][code] > -0.99
+      ) {
+        const color = darkenColor(
+          baseColor,
+          clickCounts[mapType][code],
+          isDarkMode
+        );
+        if (map.regions[code]) {
+          map.regions[code].element.select(true);
+          map.regions[code].element.shape.style.selected = { fill: color };
+          map.regions[code].element.shape.updateStyle();
+        }
       }
     });
   }
+}
+
+// Function to update URL without reloading the page
+function updateURL(mapType) {
+  const url = new URL(window.location);
+  url.searchParams.set("map", mapType);
+  window.history.pushState({}, "", url);
+}
+
+// Function to update mapType based on URL parameter
+function updateMapTypeFromURL() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlMapType = urlParams.get("map");
+
+  if (
+    urlMapType &&
+    mapSelector.querySelector(`option[value="${urlMapType}"]`)
+  ) {
+    mapType = urlMapType;
+  } else {
+    mapType = "world"; // Default to world if URL param is invalid or not present
+  }
+
+  mapSelector.value = mapType;
+  return mapType;
 }
 
 function getRegionCentralCoordinates(map, code) {
@@ -380,7 +436,12 @@ function getCookie(name) {
   for (let cookie of cookiesArray) {
     cookie = cookie.trim();
     if (cookie.startsWith(nameEQ)) {
-      return decodeURIComponent(cookie.substring(nameEQ.length));
+      const value = decodeURIComponent(cookie.substring(nameEQ.length));
+      // Parse JSON for click counts
+      if (name.endsWith("ClickCounts")) {
+        return JSON.parse(value);
+      }
+      return value;
     }
   }
   return null;
@@ -390,40 +451,7 @@ function deleteCookie(name) {
   setCookie(name, "", -1); // Set cookie with a past expiration date to delete it
 }
 
-// Local Storage utility functions
-function setLocalStorageItem(name, value) {
-  // Convert the value to a string and save it in local storage
-  const valueToStore =
-    typeof value === "object" ? JSON.stringify(value) : value;
-  localStorage.setItem(name, valueToStore);
-}
-
-function getLocalStorageItem(name) {
-  const storedValue = localStorage.getItem(name);
-
-  if (storedValue === null) {
-    return null; // Return null if the item does not exist
-  }
-
-  // Try to parse the value as JSON
-  try {
-    return JSON.parse(storedValue);
-  } catch (e) {
-    // If parsing fails, return the value as a string
-    return storedValue;
-  }
-}
-
-function deleteLocalStorageItem(name) {
-  // Remove the item from local storage
-  localStorage.removeItem(name);
-}
-
 function clearAll() {
-  deleteLocalStorageItem("clickCounts");
-  deleteLocalStorageItem("baseColor");
-  deleteLocalStorageItem("mapType");
-  deleteLocalStorageItem("idDarkMode");
   deleteCookie("clickCounts");
   deleteCookie("baseColor");
   deleteCookie("mapType");

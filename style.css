@@ -12,6 +12,7 @@
   --BTNBGCOLOR: black;
   --BTNTEXTCOLOR: whitesmoke;
   --BTHIGHLIGHTCOLOR: rgb(49, 49, 49);
+  --BTHIGHLIGHTCOLORTRANSPARENT: rgba(49, 49, 49, 0.211);
   --MAPBGCOLOR: transparent;
   --MAPBASECOLOR: #a2d2ff;
   --MAPPLAINCOLOR: #b6b6b6bf;
@@ -23,6 +24,7 @@
   --BTNBGCOLOR: #8f8f96;
   --BTNTEXTCOLOR:#151515;
   --BTHIGHLIGHTCOLOR: #b6b6bf;
+  --BTHIGHLIGHTCOLORTRANSPARENT: #b6b6bf28;
   --MAPBGCOLOR: #151515;
   --MAPBASECOLOR: #a2d2ff;
   --MAPPLAINCOLOR: #b6b6b6bf;
@@ -45,19 +47,32 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5em;
+}
+
+.change-color-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 #color-input-form {
-  margin: 0.5rem;
+  margin-left: 0.5rem;
   display: flex;
+}
+
+.change-map-container {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 #map-selector {
   display: flex;
-  width: 250px;
-  margin-right: 20px;
-  padding: 0.3rem;
+  width: 7rem;
+  margin-right: 0.5rem;
+  padding: 0.2rem;
   border: 1px solid var(--INPUTTEXTCOLOR);
   border-radius: 0.2rem ;
   background-color: transparent;
@@ -66,7 +81,7 @@ body {
 
 #base-color-input {
   width: 250px;
-  margin-right: 20px;
+  margin-right: 0.5rem;
   padding: 0.3rem;
   border: 1px solid var(--INPUTTEXTCOLOR);
   border-radius: 0.2rem ;
@@ -86,7 +101,6 @@ input[type="text"] {
 .left-button-container {
   display: flex;
   justify-content: space-between;
-
 }
 
 .button {
@@ -97,6 +111,7 @@ input[type="text"] {
   padding: 0.2rem;
   font-family: "PT Sans", sans-serif;
   font-weight: bold;
+  margin-right: 0.5rem;
 }
 
 .button:hover {
@@ -106,3 +121,16 @@ input[type="text"] {
 #submit-input-btn:active, #submit-input-btn:focus {
   background-color: var(--BTHIGHLIGHTCOLOR);
 }
+
+/* New styles for the outline reset button */
+.button.button-outline {
+  background-color: transparent ;
+  border: 1px solid var(--BTNBGCOLOR) ;
+  color: var(--BTNBGCOLOR);
+}
+
+.button.button-outline:hover {
+  background-color: var(--BTHIGHLIGHTCOLORTRANSPARENT);
+  color: var(--BTNBGCOLOR) ;
+}
+
